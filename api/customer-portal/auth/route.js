@@ -1,0 +1,7 @@
+export const dynamic = 'force-dynamic'
+
+import { NextResponse } from 'next/server'
+import { readJsonBlob, writeJsonBlob } from '../../../lib/blobJson'
+import { sendEmail } from '../../../lib/communications'
+const CRM_KEY='yard-loop-rep-portal.json'
+export async function POST(req){ try{const {email}=await req.json(); const crm=await readJsonBlob(CRM_KEY,{}); const customer=(crm.customers||[]).find(c=>String(c.email||'').toLowerCase()===String(email||'').toLowerCase()); if(!customer) return NextResponse.json({ok:true,message:'If that email exists, a login link was sent.'}); const token=globalThis.crypto?.randomUUID?.()||`portal_${Date.now()}`; const expiresAt=new Date(Date.now()+24*60*60*1000).toISOString(); const portalSessions=[{id:`ps_${Date.now()}`,customerId:customer.id,token,createdAt:new Date().toISOString(),expiresAt},...(crm.portalSessions||[])].slice(0,500); await writeJsonBlob(CRM_KEY,{...crm,portalSessions,savedAt:new Date().toISOString()}); const link=`${process.env.NEXT_PUBLIC_SITE_URL||'https://www.yard-loop.com'}/customer?token=${encodeURIComponent(token)}`; await sendEmail({to:customer.email,subject:'Your Yard Loop customer portal link',html:`<p>Hi ${customer.name||'there'},</p><p><a href="${link}">Open your Yard Loop customer portal</a>. This link expires in 24 hours.</p>`}).catch(()=>{}); return NextResponse.json({ok:true,message:'Login link sent if email exists.'})}catch(e){return NextResponse.json({ok:false,error:e.message},{status:500})} }

@@ -1,0 +1,5 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+import { getContent, styleVars, isVisible } from '../lib/content'
+import { SiteNav, SiteFooter, HiddenPage, arr } from '../components/Shell'
+export default async function Legal(){ const c=await getContent(); if(!isVisible(c,'legal')) return <HiddenPage c={c} name="Legal pages"/>; return <main style={styleVars(c)}><SiteNav c={c}/><section className="pageHero"><p className="eyebrow">Terms & policies</p><h1>{c.legal.headline}</h1><p>{c.legal.subheadline}</p></section><section className="section legalWrap"><p className="fine">Effective Date: {c.legal.effectiveDate}</p>{arr(c.legal.sections).map((s,i)=>{ const slug=String(s.title||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); return <article id={slug} className="legalCard" key={i}><h2>{s.title}</h2><p>{s.body}</p></article> })}<p className="fine">These website terms are operational starter language and should be reviewed by a qualified local attorney before high-volume use.</p></section><SiteFooter c={c}/></main> }
